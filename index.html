@@ -35,19 +35,20 @@
         background: #fffbeb;
         border: 2px solid #facc15;
         padding: 30px 50px;
-        font-size: 28px;
+        font-size: 36px; /* bigger font for balls */
         font-weight: bold;
         color: #111;
         z-index: 1000;
         border-radius: 15px;
         box-shadow: 0 5px 20px rgba(0,0,0,0.3);
         text-align: center;
+        white-space: pre; /* keeps emojis in row */
     }
 
     #resultBox button {
         margin-top: 20px;
-        padding: 10px 25px;
-        font-size: 20px;
+        padding: 12px 30px;
+        font-size: 22px;
         cursor: pointer;
         border-radius: 8px;
         border: none;
@@ -94,11 +95,11 @@ function shuffle(array) {
 // wheel settings
 const center = canvas.width / 2;
 const radius = canvas.width / 2 - 50;
-const innerRadius = 120; // bigger clickable center
+const innerRadius = 120; 
 const visualSlices = 256; 
 let rotation = 0;
 let entries = [];
-let spinning = false; // prevent multiple spins
+let spinning = false; 
 
 // Draw wheel
 function drawWheel() {
@@ -146,7 +147,7 @@ function drawWheel() {
 
 // Spin function
 function spin() {
-    if (spinning) return; // prevent new spin while spinning
+    if (spinning) return; 
     spinning = true;
 
     // reshuffle entries
@@ -183,13 +184,14 @@ function showResult() {
     const index = Math.floor(visualSlices - normalizedRotation / arc) % visualSlices;
     const result = entries[index];
 
-    document.getElementById("resultText").innerText = "🎯 Result:\n" + result;
+    const resultText = document.getElementById("resultText");
+    resultText.innerText = "🎯 Result:\n" + result;
     document.getElementById("resultBox").style.display = "block";
 }
 
 // Click center to spin
 canvas.addEventListener("click", function(e) {
-    if (spinning) return; // prevent new spin while result is open
+    if (spinning) return; 
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left - center;
     const y = e.clientY - rect.top - center;
@@ -202,7 +204,7 @@ canvas.addEventListener("click", function(e) {
 // OK button closes popup
 document.getElementById("okButton").addEventListener("click", function() {
     document.getElementById("resultBox").style.display = "none";
-    spinning = false; // allow next spin
+    spinning = false; 
 });
 
 // initial draw
