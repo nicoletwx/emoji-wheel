@@ -3,32 +3,68 @@
 <head>
 <meta charset="UTF-8">
 <title>8 Ball Emoji Wheel</title>
-
 <style>
     body {
         font-family: Arial, sans-serif;
-        text-align: center;
+        margin: 0;
+        padding: 0;
+        height: 100vh;
         background: #f4f6f8;
+        position: relative;
+    }
+
+    h1 {
+        text-align: center;
+        margin-top: 20px;
     }
 
     canvas {
-        margin-top: 20px;
+        display: block;
+        margin: 50px auto 0;
+        border: 2px solid #ccc;
+        background: #fff;
+        cursor: pointer;
     }
 
-    button {
+    #resultBox {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #fffbeb;
+        border: 2px solid #facc15;
+        padding: 30px 50px;
+        font-size: 28px;
+        font-weight: bold;
+        color: #111;
+        z-index: 1000;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        text-align: center;
+    }
+
+    #resultBox button {
         margin-top: 20px;
-        padding: 12px 25px;
-        font-size: 18px;
+        padding: 10px 25px;
+        font-size: 20px;
         cursor: pointer;
+        border-radius: 8px;
+        border: none;
+        background-color: #facc15;
+        color: #000;
+        font-weight: bold;
     }
 </style>
 </head>
-
 <body>
 
 <h1>🎡 8 Ball Emoji Wheel</h1>
-<canvas id="wheel" width="500" height="500"></canvas><br>
-<button onclick="spin()">SPIN</button>
+<canvas id="wheel" width="1000" height="1000"></canvas>
+<div id="resultBox">
+    <div id="resultText"></div>
+    <button id="okButton">OK</button>
+</div>
 
 <script>
 const canvas = document.getElementById("wheel");
@@ -38,88 +74,140 @@ const blue = "🔵";
 const red = "🔴";
 
 // generate 256 combinations
-const entries = [];
+const allEntries = [];
 for (let i = 0; i < 256; i++) {
     let combo = "";
     for (let b = 7; b >= 0; b--) {
         combo += (i & (1 << b)) ? red : blue;
     }
-    entries.push(combo);
+    allEntries.push(combo);
 }
 
-// shuffle entries using Fisher-Yates
+// shuffle function
 function shuffle(array) {
     for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [array[i], array[j]] = [array[j], array[i]];
     }
 }
-shuffle(entries);
 
-const center = 250;
-const radius = 250;
-const arc = 2 * Math.PI / entries.length;
+// wheel settings
+const center = canvas.width / 2;
+const radius = canvas.width / 2 - 50;
+const innerRadius = 120; // bigger clickable center
+const visualSlices = 256; 
 let rotation = 0;
+let entries = [];
+let spinning = false; // prevent multiple spins
 
+// Draw wheel
 function drawWheel() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    for (let i = 0; i < entries.length; i++) {
+    ctx.font = "10px Arial";
+
+    const arc = 2 * Math.PI / visualSlices;
+
+    for (let i = 0; i < visualSlices; i++) {
         const angle = rotation + i * arc;
+
+        // slice color
         ctx.beginPath();
         ctx.fillStyle = i % 2 === 0 ? "#dbeafe" : "#fee2e2";
         ctx.moveTo(center, center);
         ctx.arc(center, center, radius, angle, angle + arc);
         ctx.fill();
 
+        // draw emojis along radius
         ctx.save();
         ctx.translate(center, center);
         ctx.rotate(angle + arc / 2);
         ctx.textAlign = "right";
-        ctx.font = "12px Arial";
         ctx.fillStyle = "#000";
-        ctx.fillText(entries[i], radius - 10, 5);
+        ctx.fillText(entries[i], radius - 25, 0);
         ctx.restore();
     }
 
-    // pointer
-    ctx.fillStyle = "black";
+    // draw clickable center circle
     ctx.beginPath();
-    ctx.moveTo(center - 10, 5);
-    ctx.lineTo(center + 10, 5);
-    ctx.lineTo(center, 30);
+    ctx.arc(center, center, innerRadius, 0, 2 * Math.PI);
+    ctx.fillStyle = "#facc15";
     ctx.fill();
+    ctx.strokeStyle = "#ccc";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // add "SPIN" text
+    ctx.fillStyle = "#000";
+    ctx.font = "bold 36px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("SPIN", center, center);
 }
 
-drawWheel();
-
+// Spin function
 function spin() {
-    let spinTime = 0;
-    const spinAngle = Math.random() * 1000 + 1000; // shorter spin
+    if (spinning) return; // prevent new spin while spinning
+    spinning = true;
 
-    function rotate() {
-        spinTime += 30;
-        rotation += (spinAngle - spinTime) * 0.0001; // slightly faster
+    // reshuffle entries
+    entries = [];
+    shuffle(allEntries);
+    for (let i = 0; i < visualSlices; i++) {
+        entries.push(allEntries[i]);
+    }
 
+    const startTime = performance.now();
+    const duration = 5000;
+    const totalRotations = Math.random() * 15 + 20;
+
+    function animate(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        rotation = totalRotations * Math.sin(progress * Math.PI / 2);
         drawWheel();
 
-        if (spinTime < spinAngle) {
-            requestAnimationFrame(rotate);
+        if (progress < 1) {
+            requestAnimationFrame(animate);
         } else {
             showResult();
         }
     }
-    rotate();
+
+    requestAnimationFrame(animate);
 }
 
+// Show result
 function showResult() {
-    const index = Math.floor(
-        entries.length - (rotation % (2 * Math.PI)) / arc
-    ) % entries.length;
-
+    const arc = 2 * Math.PI / visualSlices;
+    const normalizedRotation = rotation % (2 * Math.PI);
+    const index = Math.floor(visualSlices - normalizedRotation / arc) % visualSlices;
     const result = entries[index];
-    // pop up the result
-    alert("🎯 Result: " + result);
+
+    document.getElementById("resultText").innerText = "🎯 Result:\n" + result;
+    document.getElementById("resultBox").style.display = "block";
 }
+
+// Click center to spin
+canvas.addEventListener("click", function(e) {
+    if (spinning) return; // prevent new spin while result is open
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left - center;
+    const y = e.clientY - rect.top - center;
+    const distance = Math.sqrt(x*x + y*y);
+    if(distance <= innerRadius) {
+        spin();
+    }
+});
+
+// OK button closes popup
+document.getElementById("okButton").addEventListener("click", function() {
+    document.getElementById("resultBox").style.display = "none";
+    spinning = false; // allow next spin
+});
+
+// initial draw
+entries = allEntries.slice(0, visualSlices);
+drawWheel();
 </script>
 
 </body>
