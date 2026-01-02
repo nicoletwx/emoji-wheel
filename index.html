@@ -1,4 +1,3 @@
-<h2>HELLO TEST</h2>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,12 +21,6 @@
         font-size: 18px;
         cursor: pointer;
     }
-
-    #result {
-        margin-top: 20px;
-        font-size: 22px;
-        font-weight: bold;
-    }
 </style>
 </head>
 
@@ -36,7 +29,6 @@
 <h1>🎡 8 Ball Emoji Wheel</h1>
 <canvas id="wheel" width="500" height="500"></canvas><br>
 <button onclick="spin()">SPIN</button>
-<div id="result"></div>
 
 <script>
 const canvas = document.getElementById("wheel");
@@ -55,20 +47,28 @@ for (let i = 0; i < 256; i++) {
     entries.push(combo);
 }
 
-const size = canvas.width / 2;
-const center = size;
-const arc = (2 * Math.PI) / entries.length;
+// shuffle entries using Fisher-Yates
+function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+shuffle(entries);
+
+const center = 250;
+const radius = 250;
+const arc = 2 * Math.PI / entries.length;
 let rotation = 0;
 
 function drawWheel() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    entries.forEach((text, i) => {
+    for (let i = 0; i < entries.length; i++) {
         const angle = rotation + i * arc;
         ctx.beginPath();
         ctx.fillStyle = i % 2 === 0 ? "#dbeafe" : "#fee2e2";
         ctx.moveTo(center, center);
-        ctx.arc(center, center, size, angle, angle + arc);
+        ctx.arc(center, center, radius, angle, angle + arc);
         ctx.fill();
 
         ctx.save();
@@ -77,9 +77,9 @@ function drawWheel() {
         ctx.textAlign = "right";
         ctx.font = "12px Arial";
         ctx.fillStyle = "#000";
-        ctx.fillText(text, size - 10, 5);
+        ctx.fillText(entries[i], radius - 10, 5);
         ctx.restore();
-    });
+    }
 
     // pointer
     ctx.fillStyle = "black";
@@ -94,11 +94,11 @@ drawWheel();
 
 function spin() {
     let spinTime = 0;
-    const spinAngle = Math.random() * 2000 + 3000;
+    const spinAngle = Math.random() * 1000 + 1000; // shorter spin
 
     function rotate() {
         spinTime += 30;
-        rotation += (spinAngle - spinTime) * 0.00005;
+        rotation += (spinAngle - spinTime) * 0.0001; // slightly faster
 
         drawWheel();
 
@@ -116,8 +116,9 @@ function showResult() {
         entries.length - (rotation % (2 * Math.PI)) / arc
     ) % entries.length;
 
-    document.getElementById("result").innerText =
-        "🎯 Result: " + entries[index];
+    const result = entries[index];
+    // pop up the result
+    alert("🎯 Result: " + result);
 }
 </script>
 
